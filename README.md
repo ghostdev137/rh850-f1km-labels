@@ -16,7 +16,13 @@ mmio/
   f1km-s4-s2.csv   — RH850/F1KM-S4 / S2     (Section 4B.3)
   f1km-s1.csv      — RH850/F1KM-S1          (Section 4C.3)
 binja/
-  import_f1km_labels.py   — Binary Ninja Python API importer
+  import_f1km_labels.py          — peripheral-region importer (SFR labels)
+  v850_prologue_recognizer.py    — function discovery from PREPARE /
+                                   addi-sp prologues (huge coverage win)
+  callt_analysis.py              — CTBP detection + CALLT table walk,
+                                   resolving every `callt imm6` xref
+  be_float.py                    — big-endian float helpers for Ford/TKP
+                                   calibration blocks
 ghidra/
   ImportF1kmLabels.py     — Ghidra script
 tools/
@@ -36,6 +42,59 @@ local-peripheral areas); firmwares don't need it but it's handy when
 mapping IPG / PBG / HBG guard tables.
 
 Access-prohibited filler rows are dropped.
+
+## Helpers
+
+All of these live under `binja/` and import cleanly into BN's Python
+console. Each also registers a plugin command so you can invoke them
+from `Plugins → V850 → …`.
+
+### `v850_prologue_recognizer` — find the missing functions
+
+Binary Ninja's linear sweep doesn't know the V850 PREPARE prologue
+pattern, so it silently skips hundreds to thousands of real functions
+on first open. This module scans every 2-byte-aligned offset in
+executable segments for `prepare {…}, <imm5>` (both format-XIII forms)
+and `addi -N, sp, sp` (lean prologue), and creates user functions at
+every match. On a 1 MB Ford Transit PSCM strategy image: **416 → 3,211
+functions** (+2,795) in one pass.
+
+```python
+import v850_prologue_recognizer as vpr
+vpr.apply(bv)
+```
+
+### `callt_analysis` — resolve CALLT xrefs
+
+V850's `callt imm6` is an 8-bit-indexed indirect call through a 64-entry
+halfword table at system register CTBP. BN lifts the instruction but
+can't follow the table without knowing CTBP's runtime value, so every
+`callt` is an xref dead-end. This module scans code for the common
+`movhi / movea / ldsr rX, ctbp` initialiser pattern, walks the table,
+creates a function at each resolved entry, and adds a user code xref
+from every `callt imm6` site.
+
+```python
+import callt_analysis as c
+c.apply(bv)                   # auto-detect CTBP
+c.apply(bv, ctbp=0x01003000)  # or provide manually
+```
+
+### `be_float` — decode big-endian floats in-place
+
+Ford / TKP firmwares ship calibration as big-endian IEEE-754 floats
+even on a little-endian RH850 host, so BN's native `float` type renders
+cal regions as tiny denormals. `be_float.apply_region(bv, start, size)`
+walks 4 bytes at a time, types each word as `uint32_t`, and attaches a
+`// be_f32 = <value>` inline comment where the BE interpretation is
+plausible. `apply_array(bv, addr, count, name)` does the same for a
+single named table.
+
+```python
+import be_float as bf
+bf.apply_region(bv, 0x00FD0000, 0xFFF0)
+bf.apply_array(bv, 0x00FD0038, 10, "speed_breakpoints")
+```
 
 ## Binary Ninja
 
