@@ -1,0 +1,118 @@
+start,end,group,peripheral
+0xff200000,0xff20ffff,2,Data Flash
+0xffa00000,0xffa0001f,1,FLMD
+0xffa10000,0xffa11fff,1,Flash controller
+0xffa20000,0xffa2ffff,1,FACI command-issuing area
+0xffc00000,0xffc0000f,1,FENMI (ECON_NMI)
+0xffc00100,0xffc0010f,1,FEINT (ECON_FEINT)
+0xffc01000,0xffc01003,1,SELB_INTC (SL_INTC)
+0xffc02000,0xffc02007,1,SELB_DMAC (SL_DMAC)
+0xffc10000,0xffc14ccf,1,PORT
+0xffc20000,0xffc204cf,1,PORT (JTAG)
+0xffc30000,0xffc3000f,1,DNFA_TAUD0 (DNF)
+0xffc30020,0xffc3002f,1,DNFA_TAUB0 (DNF)
+0xffc30060,0xffc3006f,1,DNFA_ENCA0 (DNF)
+0xffc300a0,0xffc300af,1,DNFA_ADCA0 (DNF)
+0xffc300e0,0xffc300ef,1,DNFA_SENT (DNF)
+0xffc34000,0xffc3401f,1,FCLA_NMI (FCLA0)
+0xffc34020,0xffc3403f,1,FCLA_INTPL (FCLA0)
+0xffc34040,0xffc3405f,1,FCLA_INTPH (FCLA0)
+0xffc34060,0xffc3407f,1,FCLA_ADCA0 (FCLA0)
+0xffc40000,0xffc4004f,1,P-Bus guard (PBG10)
+0xffc40100,0xffc4014f,1,P-Bus guard (PBG11)
+0xffc40400,0xffc4044f,1,P-Bus guard (PBG12)
+0xffc40500,0xffc4054f,1,P-Bus guard (PBG13)
+0xffc4c000,0xffc4c00f,2,P-Bus guard (PBGC0)
+0xffc4c100,0xffc4c13f,2,P-Bus guard (PBGC1)
+0xffc4c800,0xffc4c80f,2,ERRSLV (PBGC0)
+0xffc4c900,0xffc4c90f,2,ERRSLV (PBGC1)
+0xffc59800,0xffc5981f,2,EEPRDCYCL (DCIB)
+0xffc5b000,0xffc5b003,2,FBUFCCTL (FBUF_CTRL)
+0xffc62200,0xffc623ff,2,Code Flash ECC (CFECC_VCI)
+0xffc62400,0xffc625ff,2,Code Flash ECC (CFECC_CPU1)
+0xffc62a00,0xffc62a3f,2,Data Flash ECC (DFECC)
+0xffc65000,0xffc6501f,2,Local RAM ECC TEST PE1 (LRTST)
+0xffc65400,0xffc6547f,2,Local RAM ECC PE1 (LRECC)
+0xffc70100,0xffc7011f,3,ECCCSIH0
+0xffc70200,0xffc7021f,3,ECCCSIH1
+0xffc70300,0xffc7031f,3,ECCCSIH2
+0xffc70400,0xffc7041f,3,ECCCSIH3
+0xffc71300,0xffc7131f,3,ECCCFD0MB
+0xffc71400,0xffc7141f,3,ECCCFD0AFL0
+0xffc71500,0xffc7151f,3,ECCCFD0AFL1
+0xffc78000,0xffc78003,1,SELB READ TEST (SL_READTEST)
+0xffca0000,0xffca007f,1,RIIC0
+0xffca0080,0xffca00ff,1,RIIC1
+0xffcd0000,0xffcd01ff,1,PRDNAME/CHIPID (SCDS)
+0xffce0000,0xffce007f,1,RLN240
+0xffce2000,0xffce203f,1,RLN30
+0xffce2040,0xffce207f,1,RLN31
+0xffce2080,0xffce20bf,1,RLN32
+0xffce20c0,0xffce20ff,1,RLN33
+0xffcf0000,0xffcf007f,1,RSENT0
+0xffcf0100,0xffcf017f,1,RSENT1
+0xffd00000,0xffd1ffff,3,RCFDC0
+0xffd70000,0xffd7003f,3,OSTM0
+0xffd80000,0xffd8001f,3,"CSIH0 (CSIH0CTL0-2, CSIH0STR0, CSIH0STCR0, CSIH0EMU)"
+0xffd81000,0xffd8107f,3,CSIH0 (CSIH0 registers other than above)
+0xffd82000,0xffd8201f,3,"CSIH1 (CSIH1CTL0-2, CSIH1STR0, CSIH1STCR0, CSIH1EMU)"
+0xffd83000,0xffd8307f,3,CSIH1 (CSIH1 registers other than above)
+0xffd84000,0xffd8401f,3,"CSIH2 (CSIH2CTL0-2, CSIH2STR0, CSIH2STCR0, CSIH2EMU)"
+0xffd85000,0xffd8507f,3,CSIH2 (CSIH2 registers other than above)
+0xffd86000,0xffd8601f,3,"CSIH3 (CSIH3CTL0-2, CSIH3STR0, CSIH3STCR0, CSIH3EMU)"
+0xffd87000,0xffd8707f,3,CSIH3 (CSIH3 registers other than above)
+0xffd88000,0xffd8801f,3,"CSIG0 (CSIG0CTL0-2, CSIG0STR0, CSIG0STCR0, CSIG0EMU)"
+0xffd89000,0xffd8901f,3,CSIG0 (CSIG0 registers other than above)
+0xffdd0000,0xffdd00ff,2,PIC0
+0xffddd000,0xffddd04f,2,P-Bus guard (PBG20)
+0xffddd100,0xffddd14f,2,P-Bus guard (PBG21)
+0xffe20000,0xffe203ff,2,TAUD0
+0xffe24000,0xffe24003,2,SELB_TAUD0 (SL_TAUD0)
+0xffe30000,0xffe303ff,2,TAUB0
+0xffe32000,0xffe32003,2,SELB_TAUB0 (SL_TAUB0)
+0xffe50000,0xffe500ff,2,TAUJ0
+0xffe50100,0xffe501ff,2,TAUJ2
+0xffe51000,0xffe510ff,2,TAUJ1
+0xffe51100,0xffe511ff,2,TAUJ3
+0xffe54000,0xffe54003,2,SELB_TAUJ0 (SL_TAUJ0)
+0xffe54004,0xffe54007,2,SELB_TAUJ2 (SL_TAUJ2)
+0xffe70000,0xffe702ff,2,PWSA0
+0xffe71000,0xffe71bff,2,PWGAn
+0xffe72800,0xffe7281f,2,PWBA0
+0xffe73000,0xffe7301f,2,SLPWG
+0xffe73100,0xffe7312f,2,PWGA_INTF
+0xffe78000,0xffe7807f,2,RTCA0
+0xffe80000,0xffe8007f,2,ENCA0
+0xffe90000,0xffe9003f,2,TAPA0
+0xffed0000,0xffed000f,2,WDTA0
+0xffed1000,0xffed100f,2,WDTA1
+0xfff20000,0xfff207ff,1,ADCA0
+0xfff70000,0xfff7003f,1,DCRA0
+0xfff71000,0xfff7103f,1,DCRA1
+0xfff72000,0xfff7203f,1,DCRA2
+0xfff73000,0xfff7303f,1,DCRA3
+0xfff78000,0xfff78003,1,KR0
+0xfff80000,0xfff8000f,1,Write protected register (WPROTR)
+0xfff80100,0xfff8011f,1,STBC0
+0xfff80400,0xfff8040f,1,STBC_WUF0
+0xfff80410,0xfff8041f,1,STBC_WUF1
+0xfff80520,0xfff8052f,1,STBC_WUF20
+0xfff80760,0xfff80aff,1,"Reset controller / Supply voltage monitor (LVI,VLVI)"
+0xfff80b00,0xfff80fff,1,STBC_IOHOLD
+0xfff81000,0xfff82fff,1,Clock controller (CLKCTL)
+0xfff83000,0xfff8307f,1,LPS0
+0xfff83100,0xfff83207,1,CVM (SVM)
+0xfff83600,0xfff83603,1,Reset controller CYCRBASE (RESCTL)
+0xfff88000,0xfff8800f,1,Write protected register (WPROTR)
+0xfff88110,0xfff8811f,1,STBC_WUFISO
+0xfff88120,0xfff8bfff,1,Clock controller (CLKCTL)
+0xfff8c000,0xfff8cfff,1,"CLMA0, CLMA"
+0xfff8d000,0xfff8dfff,1,CLMA1
+0xfff8e000,0xfff8efff,1,CLMA3
+0xfff90000,0xfff9004f,1,P-Bus guard (PBG50)
+0xfff94000,0xfff9404f,3,P-Bus guard (PBG30)
+0xfff94100,0xfff9414f,3,P-Bus guard (PBG31)
+0xfff94200,0xfff9424f,3,P-Bus guard (PBG32)
+0xfffee000,0xfffee03f,CPU,local peripheral   IPG
+0xffff8000,0xffff8fff,2,PDMA0
+0xffffb000,0xffffbfff,2,INTC2

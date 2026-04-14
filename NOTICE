@@ -1,0 +1,17 @@
+rh850-f1km-labels
+Copyright 2026 ghostdev137
+
+This product is licensed under the Apache License, Version 2.0.
+
+The peripheral-region tables under `mmio/` are derived from:
+
+    RH850/F1KH, RH850/F1KM Hardware User's Manual
+    Document R01UH0684EJ0130, Revision 1.30 (Renesas Electronics, 2021-09-30)
+    Sections 4A.3 / 4B.3 / 4C.3 — Peripheral I/O Address Map
+
+Renesas Electronics Corporation retains copyright on the original
+manual. The CSV data here is a factual re-statement of those tables,
+reproduced for interoperability with third-party disassembly and
+reverse-engineering tools (analogous to a vendor SVD file). The
+extraction script under `tools/` is provided so anyone can re-derive
+the data from their own copy of the manual.
