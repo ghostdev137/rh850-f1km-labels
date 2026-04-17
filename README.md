@@ -21,6 +21,14 @@ binja/
                                    addi-sp prologues (huge coverage win)
   callt_analysis.py              — CTBP detection + CALLT table walk,
                                    resolving every `callt imm6` xref
+  switch_analysis.py             — V850 switch / jump-table recovery,
+                                   adding case xrefs at indirect branches
+  control_flow_analysis.py       — constant-target indirect `jmp` / `jarl`
+                                   recovery and likely-call annotation
+  full_recovery.py               — convenience wrapper that runs the main
+                                   recovery passes in sequence
+  v850_value_tracker.py          — narrow backward register tracker used by
+                                   switch / CTBP-style analyses
   be_float.py                    — big-endian float helpers for Ford/TKP
                                    calibration blocks
 ghidra/
@@ -78,6 +86,55 @@ from every `callt imm6` site.
 import callt_analysis as c
 c.apply(bv)                   # auto-detect CTBP
 c.apply(bv, ctbp=0x01003000)  # or provide manually
+```
+
+### `switch_analysis` — recover switch tables and jump tables
+
+Binary Ninja lifts V850 `switch rA` correctly at the LLIL level, but it does
+not aggressively recover the surrounding bounds/default metadata or add user
+code refs to every recovered case target. This module reimplements the useful
+parts of IDA's NEC850 switch recogniser in BN:
+
+- `switch rA` with nearby `cmp/addi + bh/bl/...`
+- optional lowcase adjustment via `movea/add`
+- `shl + jmp table[rA]` jump-table variant
+
+For each recovered site it adds user xrefs to the case targets, creates
+functions there if needed, and leaves a comment with the recovered metadata.
+
+```python
+import switch_analysis as s
+s.apply(bv)
+```
+
+### `control_flow_analysis` — recover indirect jumps/calls
+
+This pass uses the same narrow backward value tracker to resolve constant
+targets through nearby register setup and annotate indirect control flow that
+Binary Ninja leaves unresolved:
+
+- `jmp [reg]` with a constant-resolvable target
+- `jarl reg, dst` with a constant-resolvable target
+- `jmp [reg]` sites where `lp` appears to equal the fallthrough address,
+  which is a strong hint the jump is acting as an indirect call
+
+```python
+import control_flow_analysis as cfa
+cfa.apply(bv)
+```
+
+### `full_recovery` — run the whole recovery stack
+
+If you just want one command, this runs the useful passes in order:
+
+1. PREPARE/addi-sp prologue recovery
+2. CALLT xref recovery
+3. switch/jump-table recovery
+4. constant indirect `jmp` / `jarl` recovery
+
+```python
+import full_recovery as fr
+fr.apply(bv)
 ```
 
 ### `be_float` — decode big-endian floats in-place
