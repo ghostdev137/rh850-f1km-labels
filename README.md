@@ -137,7 +137,8 @@ If you just want one command, this runs the useful passes in order:
 
 ```python
 import full_recovery as fr
-fr.apply(bv)
+fr.apply(bv)                    # returns per-pass counts + before/after func totals
+fr.apply(bv, wait_for_analysis=True)
 ```
 
 ### `be_float` — decode big-endian floats in-place

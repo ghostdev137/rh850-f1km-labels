@@ -17,8 +17,9 @@ import switch_analysis as switches
 import control_flow_analysis as cflow
 
 
-def apply(bv: "bn.BinaryView") -> dict[str, int]:
-    out: dict[str, int] = {}
+def apply(bv: "bn.BinaryView", wait_for_analysis: bool = False) -> dict[str, int]:
+    before = len(list(bv.functions))
+    out: dict[str, int] = {"before": before}
     out["prologues"] = vpr.apply(bv)
     try:
         out["callt"] = callt.apply(bv)
@@ -26,6 +27,10 @@ def apply(bv: "bn.BinaryView") -> dict[str, int]:
         out["callt"] = 0
     out["switches"] = switches.apply(bv)
     out["indirect_cf"] = cflow.apply(bv)
+    if wait_for_analysis:
+        bv.update_analysis_and_wait()
+    out["after"] = len(list(bv.functions))
+    out["delta"] = out["after"] - out["before"]
     return out
 
 
