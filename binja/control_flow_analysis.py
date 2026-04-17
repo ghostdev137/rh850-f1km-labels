@@ -26,6 +26,13 @@ from v850_value_tracker import Insn, normalize_reg, resolve_reg
 from switch_analysis import _iter_fn_insns, _in_exec
 
 
+def _define_function(bv: "bn.BinaryView", addr: int) -> None:
+    if hasattr(bv, "create_user_function"):
+        bv.create_user_function(addr)
+    else:
+        bv.add_function(addr)
+
+
 _BRACKET_REG = re.compile(r"^\[([^\]]+)\]$")
 
 
@@ -66,7 +73,7 @@ def _recover_site(bv: "bn.BinaryView", insns: list[Insn], idx: int) -> bool:
         return False
 
     if bv.get_function_at(target) is None:
-        bv.add_function(target)
+        _define_function(bv, target)
     bv.add_user_code_ref(insn.addr, target)
 
     try:

@@ -23,6 +23,13 @@ import binaryninja as bn
 from v850_value_tracker import Expr, Insn, normalize_reg, parse_imm, resolve_expr, resolve_reg
 
 
+def _define_function(bv: "bn.BinaryView", addr: int) -> None:
+    if hasattr(bv, "create_user_function"):
+        bv.create_user_function(addr)
+    else:
+        bv.add_function(addr)
+
+
 @dataclass(frozen=True)
 class Recovery:
     site: int
@@ -380,7 +387,7 @@ def apply(bv: "bn.BinaryView") -> int:
             seen_sites.add(rec.site)
             for target in rec.targets:
                 if bv.get_function_at(target) is None:
-                    bv.add_function(target)
+                    _define_function(bv, target)
                 bv.add_user_code_ref(rec.site, target)
             if rec.default is not None and _in_exec(bv, rec.default):
                 bv.add_user_code_ref(rec.site, rec.default)

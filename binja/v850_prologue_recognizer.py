@@ -28,6 +28,13 @@ from __future__ import annotations
 
 import binaryninja as bn
 
+
+def _define_function(bv: "bn.BinaryView", addr: int) -> None:
+    if hasattr(bv, "create_user_function"):
+        bv.create_user_function(addr)
+    else:
+        bv.add_function(addr)
+
 # V850 format-XIII PREPARE opcode: hw1 bits [10:6] == 0b11001.
 # PREPARE's full spec:
 #   hw1 = rrrrr 11001 0 L iiiii              (wait - spec is:
@@ -131,7 +138,7 @@ def apply(bv: "bn.BinaryView", max_scan_bytes: int = 4 * 1024 * 1024) -> int:
                 continue
             chunk = data[off : off + 4]
             if _is_prepare(chunk) or _is_addi_neg_sp(chunk):
-                bv.add_function(addr)
+                _define_function(bv, addr)
                 existing_starts.add(addr)
                 created += 1
 
