@@ -82,6 +82,19 @@ def _shl_expr(expr: Expr, imm: int) -> Expr:
     return Expr(const=(expr.const << imm) & 0xFFFFFFFF, reg=expr.reg, scale=expr.scale << imm)
 
 
+def _operand_expr(insns: list[Insn], idx: int, operand: str, depth: int) -> Optional[Expr]:
+    if is_reg(operand):
+        reg = normalize_reg(operand)
+        expr = resolve_expr(insns, idx, reg, depth + 1)
+        if expr is not None:
+            return expr
+        return Expr(const=0, reg=reg, scale=1)
+    imm = parse_imm(operand)
+    if imm is None:
+        return None
+    return Expr(const=imm & 0xFFFFFFFF)
+
+
 def resolve_expr(insns: list[Insn], idx: int, reg: str, depth: int = 0) -> Optional[Expr]:
     """Resolve a narrow symbolic expression for `reg` before insns[idx].
 
@@ -161,20 +174,26 @@ def resolve_expr(insns: list[Insn], idx: int, reg: str, depth: int = 0) -> Optio
                 scale=base_expr.scale,
             )
 
+        if m in {"add", "sub", "ori"} and len(ops) == 3 and normalize_reg(ops[2]) == reg:
+            lhs_expr = _operand_expr(insns, j, ops[0], depth)
+            rhs_expr = _operand_expr(insns, j, ops[1], depth)
+            if lhs_expr is None or rhs_expr is None:
+                return None
+            if m == "add":
+                return _add_expr(lhs_expr, rhs_expr)
+            if m == "sub":
+                return _sub_expr(rhs_expr, lhs_expr)
+            if lhs_expr.reg is None and rhs_expr.reg is None:
+                return Expr(const=(lhs_expr.const | rhs_expr.const) & 0xFFFFFFFF)
+            return None
+
         if m in {"add", "sub", "shl"} and len(ops) == 2 and normalize_reg(ops[1]) == reg:
-            lhs = ops[0]
             rhs_expr = resolve_expr(insns, j, reg, depth + 1)
             if rhs_expr is None:
                 return None
-            if is_reg(lhs):
-                lhs_expr = resolve_expr(insns, j, lhs, depth + 1)
-                if lhs_expr is None:
-                    lhs_expr = Expr(const=0, reg=normalize_reg(lhs), scale=1)
-            else:
-                lhs_val = parse_imm(lhs)
-                if lhs_val is None:
-                    return None
-                lhs_expr = Expr(const=lhs_val & 0xFFFFFFFF)
+            lhs_expr = _operand_expr(insns, j, ops[0], depth)
+            if lhs_expr is None:
+                return None
 
             if m == "add":
                 return _add_expr(rhs_expr, lhs_expr)
