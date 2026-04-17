@@ -75,6 +75,26 @@ def _is_addi_neg_sp(data: bytes) -> bool:
     return -0x8000 <= imm16 <= -4   # small negative (-4..-32K)
 
 
+_CAL_RANGES = (
+    # Known pure-data regions on Ford/TKP firmwares. Any prologue match
+    # inside these is guaranteed to be a float-table false positive.
+    (0x00FD0000, 0x00FE0000),  # Transit / F150 cal data flash window
+)
+
+
+def _addr_in_data_region(bv: "bn.BinaryView", addr: int) -> bool:
+    """True if `addr` sits inside a section whose semantics are read-only
+    data or writable data — places a function prologue cannot exist."""
+    if any(lo <= addr < hi for lo, hi in _CAL_RANGES):
+        return True
+    for s in bv.get_sections_at(addr):
+        semantics = s.semantics
+        if semantics in (bn.SectionSemantics.ReadOnlyDataSectionSemantics,
+                         bn.SectionSemantics.ReadWriteDataSectionSemantics):
+            return True
+    return False
+
+
 def apply(bv: "bn.BinaryView", max_scan_bytes: int = 4 * 1024 * 1024) -> int:
     """Scan all executable segments for PREPARE / addi-neg-sp prologues
     and create functions at every match that isn't already one.
@@ -83,6 +103,13 @@ def apply(bv: "bn.BinaryView", max_scan_bytes: int = 4 * 1024 * 1024) -> int:
     """
     created = 0
     existing_starts = {fn.start for fn in bv.functions}
+    # Fast membership test for "is this address backed by a segment BN
+    # can actually analyze" — guards against creating ghost functions in
+    # memory the file never maps.
+    backed = [(seg.start, seg.end) for seg in bv.segments if seg.executable]
+
+    def in_backed(a):
+        return any(lo <= a < hi for lo, hi in backed)
 
     for seg in bv.segments:
         if not seg.executable:
@@ -93,9 +120,14 @@ def apply(bv: "bn.BinaryView", max_scan_bytes: int = 4 * 1024 * 1024) -> int:
             addr = start + off
             if addr in existing_starts:
                 continue
-            # Skip if addr is already inside some known function (mid-
-            # body match would produce a spurious split).
             if bv.get_functions_containing(addr):
+                continue
+            if _addr_in_data_region(bv, addr):
+                continue
+            # Both the prologue bytes AND any fall-through must be inside
+            # a real backed executable segment; without this BN complains
+            # "Attempting to add function not backed by file" on edge hits.
+            if not in_backed(addr):
                 continue
             chunk = data[off : off + 4]
             if _is_prepare(chunk) or _is_addi_neg_sp(chunk):
