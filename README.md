@@ -98,6 +98,8 @@ parts of IDA's NEC850 switch recogniser in BN:
 - `switch rA` with nearby `cmp/addi + bh/bl/...`
 - optional lowcase adjustment via `movea/add`
 - `shl + jmp table[rA]` jump-table variant
+- `ld.w table[index] -> jmp [reg]` tables using symbolic `const + scale*reg`
+  address recovery for the table base
 
 For each recovered site it adds user xrefs to the case targets, creates
 functions there if needed, and leaves a comment with the recovered metadata.

@@ -20,7 +20,7 @@ from typing import Iterable, Optional
 
 import binaryninja as bn
 
-from v850_value_tracker import Insn, normalize_reg, parse_imm, resolve_reg
+from v850_value_tracker import Expr, Insn, normalize_reg, parse_imm, resolve_expr, resolve_reg
 
 
 @dataclass(frozen=True)
@@ -266,6 +266,101 @@ def _recover_jmp_table(bv: "bn.BinaryView", insns: list[Insn], idx: int) -> Opti
     )
 
 
+def _parse_mem_operand(op: str) -> tuple[Optional[int], Optional[str]]:
+    if "[" not in op or "]" not in op:
+        return None, None
+    disp_s, reg_s = op.split("[", 1)
+    reg = normalize_reg(reg_s.rstrip("]").strip())
+    disp = parse_imm(disp_s.strip()) if disp_s.strip() else 0
+    if disp is None:
+        return None, None
+    return disp, reg
+
+
+def _extract_table_base(expr: Expr, disp: int) -> Optional[tuple[int, str, int]]:
+    if expr.reg is None:
+        return None
+    scale = expr.scale
+    if scale not in {1, 2, 4, 8}:
+        return None
+    return ((expr.const + disp) & 0xFFFFFFFF, expr.reg, scale)
+
+
+def _recover_ldw_jmp_table(bv: "bn.BinaryView", insns: list[Insn], idx: int) -> Optional[Recovery]:
+    insn = insns[idx]
+    if insn.mnemonic != "jmp" or len(insn.operands) != 1:
+        return None
+
+    target_reg = _indirect_target_reg(insn.operands[0])
+    if target_reg is None:
+        return None
+
+    ld_idx = None
+    ld_insn = None
+    for j in range(idx - 1, max(-1, idx - 4), -1):
+        if j < 0:
+            break
+        cand = insns[j]
+        if cand.mnemonic not in {"ld.w", "ldw"} or len(cand.operands) != 2:
+            continue
+        if normalize_reg(cand.operands[1]) != target_reg:
+            continue
+        ld_idx = j
+        ld_insn = cand
+        break
+    if ld_idx is None or ld_insn is None:
+        return None
+
+    disp, addr_reg = _parse_mem_operand(ld_insn.operands[0])
+    if addr_reg is None:
+        return None
+    addr_expr = resolve_expr(insns, ld_idx, addr_reg)
+    if addr_expr is None:
+        return None
+    table_info = _extract_table_base(addr_expr, disp)
+    if table_info is None:
+        return None
+    table_base, index_reg, elsize = table_info
+
+    ncases, default, lowcase = _find_bounds(insns, ld_idx, index_reg, bv)
+    if ncases is None or ncases <= 0 or ncases > 0x2000:
+        return None
+
+    targets: list[int] = []
+    for i in range(ncases):
+        entry_addr = table_base + i * elsize
+        raw = bv.read(entry_addr, 4)
+        if len(raw) != 4:
+            continue
+        direct = struct.unpack_from("<I", raw, 0)[0]
+        if _in_exec(bv, direct):
+            targets.append(direct)
+            continue
+        rel = (table_base + i * elsize + struct.unpack_from("<i", raw, 0)[0]) & 0xFFFFFFFF
+        if _in_exec(bv, rel):
+            targets.append(rel)
+    if not targets:
+        return None
+
+    return Recovery(
+        site=insn.addr,
+        kind="ldw-jmp-table",
+        index_reg=index_reg,
+        table_base=table_base,
+        ncases=ncases,
+        lowcase=lowcase,
+        default=default,
+        targets=tuple(targets),
+    )
+
+
+def _indirect_target_reg(op: str) -> Optional[str]:
+    op = op.strip()
+    if not (op.startswith("[") and op.endswith("]")):
+        return None
+    return normalize_reg(op[1:-1])
+
+
 def apply(bv: "bn.BinaryView") -> int:
     """Recover switch tables and annotate them with user code xrefs."""
     recovered = 0
@@ -278,7 +373,7 @@ def apply(bv: "bn.BinaryView") -> int:
             if insn.mnemonic == "switch":
                 rec = _recover_switch_table(bv, insns, idx)
             elif insn.mnemonic == "jmp":
-                rec = _recover_jmp_table(bv, insns, idx)
+                rec = _recover_jmp_table(bv, insns, idx) or _recover_ldw_jmp_table(bv, insns, idx)
             if rec is None or rec.site in seen_sites:
                 continue
 
