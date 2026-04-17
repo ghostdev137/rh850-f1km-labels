@@ -102,6 +102,21 @@ def _addr_in_data_region(bv: "bn.BinaryView", addr: int) -> bool:
     return False
 
 
+def _skip_segment(bv: "bn.BinaryView", seg) -> bool:
+    """Heuristics for synthetic full-ELF glue segments that are marked RX.
+
+    Ford PSCM combined ELFs often include a tiny executable segment at vaddr 0
+    carrying file/header glue. It disassembles, but it is not real firmware
+    code and produces false-positive PREPARE matches on a cold start.
+    """
+    if not seg.executable:
+        return True
+    exec_segments = [s for s in bv.segments if s.executable]
+    if seg.start == 0 and (seg.end - seg.start) <= 0x1000 and len(exec_segments) > 1:
+        return True
+    return False
+
+
 def apply(bv: "bn.BinaryView", max_scan_bytes: int = 4 * 1024 * 1024) -> int:
     """Scan all executable segments for PREPARE / addi-neg-sp prologues
     and create functions at every match that isn't already one.
@@ -119,7 +134,7 @@ def apply(bv: "bn.BinaryView", max_scan_bytes: int = 4 * 1024 * 1024) -> int:
         return any(lo <= a < hi for lo, hi in backed)
 
     for seg in bv.segments:
-        if not seg.executable:
+        if _skip_segment(bv, seg):
             continue
         start, end = seg.start, min(seg.end, seg.start + max_scan_bytes)
         data = bv.read(start, end - start)
