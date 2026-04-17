@@ -28,7 +28,8 @@ binja/
   full_recovery.py               — convenience wrapper that runs the main
                                    recovery passes in sequence
   v850_value_tracker.py          — narrow backward register tracker used by
-                                   switch / CTBP-style analyses
+                                   switch / CTBP-style analyses, including
+                                   simple `const + scale*reg` forms
   be_float.py                    — big-endian float helpers for Ford/TKP
                                    calibration blocks
 ghidra/
